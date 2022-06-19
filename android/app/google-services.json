@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "776573513081",
+    "project_id": "drive-share-sl",
+    "storage_bucket": "drive-share-sl.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:776573513081:android:58bf1a4eef3dc08b05d3a8",
+        "android_client_info": {
+          "package_name": "com.civdevops.share_drive_sl"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "776573513081-9s3mlflbvobldak9934l9r8ags5rhauk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCg0jQZWGbSZdLVQAt_shtSYa--u5YgJaE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "776573513081-9s3mlflbvobldak9934l9r8ags5rhauk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

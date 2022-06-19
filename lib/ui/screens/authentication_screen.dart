@@ -19,6 +19,7 @@ class AuthenticationScreen extends StatefulWidget {
 }
 
 class AuthenticationScreenState extends State<AuthenticationScreen> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,11 +36,16 @@ class AuthenticationScreenState extends State<AuthenticationScreen> {
   Widget getBody() {
     switch (widget.screenType) {
       case AuthenticationScreen.authScreenTypeRegister:
-        return RegisterWidget();
+        return const RegisterWidget();
       case AuthenticationScreen.authScreenTypeForgotPassword:
-        return ForgotPasswordWidget();
+        return const ForgotPasswordWidget();
       default:
-        return LoginWidget();
+        return const LoginWidget();
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
   }
 }

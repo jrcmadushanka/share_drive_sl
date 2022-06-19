@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
+import '../../services/firebase_service.dart';
 import 'authentication_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -64,10 +66,17 @@ class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    FirebaseService firebaseService = GetIt.I.get<FirebaseService>();
 
-    _timer = Timer(const Duration(seconds: 1), () {
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AuthenticationScreen(screenType: AuthenticationScreen.authScreenTypeRegister)));
+    _timer = Timer(const Duration(seconds: 2), () {
+      firebaseService
+          .authStatus()
+          .then((value) {print(value?.displayName); print("--------------------------------------------------------------------");})
+          .onError((error, stackTrace) {
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                    builder: (_) => const AuthenticationScreen(
+                        screenType: AuthenticationScreen.authScreenTypeLogin)));
+              });
     });
   }
 }

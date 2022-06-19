@@ -1,13 +1,17 @@
 import 'dart:io';
 
 import 'package:dotted_border/dotted_border.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_drive_sl/ui/widgets/default_button.dart';
 import 'package:share_drive_sl/ui/widgets/selectablel_icon_button.dart';
 import 'package:share_drive_sl/utilities/application_constants.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../services/firebase_service.dart';
 import '../../utilities/custom_resources.dart';
+import '../screens/authentication_screen.dart';
 import 'default_text_field.dart';
 import 'number_box.dart';
 
@@ -21,11 +25,29 @@ class RegisterWidget extends StatefulWidget {
 }
 
 class RegisterWidgetState extends State<RegisterWidget> {
-  int section = 2;
+  late FirebaseService firebaseService;
+
+  int section = 1;
   String verificationType = ApplicationConstants.verificationTypeNIC;
   File? document1;
   File? document2;
   File? document3;
+  bool userAgreed = false;
+
+  final _formKey = GlobalKey<FormState>();
+  var phoneFieldController = TextEditingController();
+  var firstNameFieldController = TextEditingController();
+  var lastNameFieldController = TextEditingController();
+  var emailFieldController = TextEditingController();
+  var addressFieldController = TextEditingController();
+  var passwordFieldController = TextEditingController();
+  var rePasswordFieldController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    firebaseService = GetIt.I.get<FirebaseService>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,91 +101,146 @@ class RegisterWidgetState extends State<RegisterWidget> {
                     ? getSectionOne()
                     : section == 2
                         ? getSectionTwo()
-                        : getSectionTwo(),
+                        : getSectionThree(),
               ))
             ]));
   }
 
   Widget getSectionOne() {
-    return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            "First name",
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: CustomResource.primaryGreen,
-                fontSize: 14),
-          ),
-          Container(
-            height: 45,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: const DefaultTextField(
-                "Enter first name", null, false, TextInputType.text),
-          ),
-          const Text(
-            "Last name",
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: CustomResource.primaryGreen,
-                fontSize: 14),
-          ),
-          Container(
-            height: 45,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: const DefaultTextField(
-                "Enter last name", null, false, TextInputType.text),
-          ),
-          const Text(
-            "Email",
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: CustomResource.primaryGreen,
-                fontSize: 14),
-          ),
-          Container(
-            height: 45,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: const DefaultTextField(
-                "Enter email", null, false, TextInputType.text),
-          ),
-          const Text(
-            "Phone number",
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: CustomResource.primaryGreen,
-                fontSize: 14),
-          ),
-          Container(
-            height: 45,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: const DefaultTextField(
-                "Enter phone", null, false, TextInputType.text),
-          ),
-          const Text(
-            "Address",
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: CustomResource.primaryGreen,
-                fontSize: 14),
-          ),
-          Container(
-            height: 45,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: const DefaultTextField(
-                "Enter address", null, false, TextInputType.text),
-          ),
-          Container(
-            height: 45,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: DefaultButton("Continue Registration", () {
-              setState(() {
-                section = 2;
-              });
-            }),
-          ),
-        ]);
+    return Form(
+        key: _formKey,
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                "First name",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: CustomResource.primaryGreen,
+                    fontSize: 14),
+              ),
+              Container(
+                height: 45,
+                margin: const EdgeInsets.only(top: 8, bottom: 21),
+                child: DefaultTextField("Enter first name",
+                    type: TextInputType.name,
+                    controller: firstNameFieldController),
+              ),
+              const Text(
+                "Last name",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: CustomResource.primaryGreen,
+                    fontSize: 14),
+              ),
+              Container(
+                height: 45,
+                margin: const EdgeInsets.only(top: 8, bottom: 21),
+                child: DefaultTextField("Enter last name",
+                    type: TextInputType.name,
+                    controller: lastNameFieldController),
+              ),
+              const Text(
+                "Email",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: CustomResource.primaryGreen,
+                    fontSize: 14),
+              ),
+              Container(
+                height: 45,
+                margin: const EdgeInsets.only(top: 8, bottom: 21),
+                child: DefaultTextField("Enter email",
+                    type: TextInputType.emailAddress,
+                    controller: emailFieldController),
+              ),
+              const Text(
+                "Phone number",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: CustomResource.primaryGreen,
+                    fontSize: 14),
+              ),
+              Container(
+                  height: 45,
+                  margin: const EdgeInsets.only(top: 8, bottom: 21),
+                  child: Row(
+                    children: [
+                      const Text(
+                        "+94",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: CustomResource.primaryGreen,
+                            fontSize: 14),
+                      ),
+                      const SizedBox(
+                        width: 8,
+                      ),
+                      Expanded(
+                          child: DefaultTextField(
+                        "Enter phone",
+                        type: TextInputType.phone,
+                        controller: phoneFieldController,
+                        inputFormatter: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                          LengthLimitingTextInputFormatter(10,
+                              maxLengthEnforcement: MaxLengthEnforcement
+                                  .truncateAfterCompositionEnds)
+                        ],
+                      )),
+                    ],
+                  )),
+              const Text(
+                "Address",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: CustomResource.primaryGreen,
+                    fontSize: 14),
+              ),
+              Container(
+                height: 45,
+                margin: const EdgeInsets.only(top: 8, bottom: 21),
+                child: DefaultTextField("Enter address",
+                    type: TextInputType.streetAddress,
+                    controller: emailFieldController),
+              ),
+              const Text(
+                "Password",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: CustomResource.primaryGreen,
+                    fontSize: 14),
+              ),
+              Container(
+                height: 45,
+                margin: const EdgeInsets.only(top: 8, bottom: 21),
+                child: DefaultTextField("Enter Password",
+                    isSecure: true, controller: passwordFieldController),
+              ),
+              const Text(
+                "Re-Password",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: CustomResource.primaryGreen,
+                    fontSize: 14),
+              ),
+              Container(
+                height: 45,
+                margin: const EdgeInsets.only(top: 8, bottom: 21),
+                child: DefaultTextField("Reenter the Password",
+                    isSecure: true, controller: rePasswordFieldController),
+              ),
+              Container(
+                height: 45,
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                child: DefaultButton("Continue Registration", () {
+                  setState(() {
+                    section = 2;
+                  });
+                }),
+              ),
+            ]));
   }
 
   Widget getSectionTwo() {
@@ -190,11 +267,16 @@ class RegisterWidgetState extends State<RegisterWidget> {
                 fontSize: 11),
             textAlign: TextAlign.center,
           ),
+          Container(
+            margin: const EdgeInsets.only(top: 16),
+            height: 1,
+            color: CustomResource.primaryGreenGray.withAlpha(50),
+          ),
           const SizedBox(
-            height: 26,
+            height: 16,
           ),
           const Text(
-            "Select contact verification type",
+            "Select user verification type",
             style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: CustomResource.primaryGreen,
@@ -234,6 +316,11 @@ class RegisterWidgetState extends State<RegisterWidget> {
                 },
               ),
             ],
+          ),
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            height: 1,
+            color: CustomResource.primaryGreenGray.withAlpha(50),
           ),
           Text(
             "Take a clear photo of the ${verificationType == ApplicationConstants.verificationTypePassport ? "first page of your $verificationType" : "front side of your $verificationType"}",
@@ -372,7 +459,7 @@ class RegisterWidgetState extends State<RegisterWidget> {
             margin: const EdgeInsets.symmetric(vertical: 8),
             child: DefaultButton("Continue Registration", () {
               setState(() {
-                section = 2;
+                section = 3;
               });
             }),
           ),
@@ -391,14 +478,119 @@ class RegisterWidgetState extends State<RegisterWidget> {
     return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: const [
-          Text(
-            "First name",
+        children: [
+          const Text(
+            "Terms and Conditions",
             style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: CustomResource.primaryGreenLight,
-                fontSize: 14),
-          )
+                fontSize: 16),
+          ),
+          const SizedBox(
+            height: 21,
+          ),
+          const Text(
+            "General",
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+          ),
+          const SizedBox(
+            height: 8,
+          ),
+          const Text(
+            "Welcome to Share Drive SL. \n"
+            "This applications has been developed in order to help citizens"
+            " of Sri Lanka to accommodate their day to day transportation needs \n"
+            "This application must only used to cover up your fuel fees and rates should be calculated according to fuel consumption. \n"
+            "This application can't be used for any type of commercial use or as any type of income source\n"
+            "This application will not motivate you to serve as a driver, We motivate you to share your vehicle when you are comfortable to "
+            "share it and help the community while helping your self with fuel fee. \n\n"
+            "Provided user verifications documentations will be securely saved on our servers and would not be provided to any individual user directly "
+            "in any circumstances. These data  would be provided to respective secure authorities in case of a proven scenario of legal case documented on respective authority.",
+            style: TextStyle(
+                fontWeight: FontWeight.normal,
+                color: Colors.white,
+                fontSize: 12),
+          ),
+          const SizedBox(
+            height: 16,
+          ),
+          TextButton(
+              onPressed: () {
+                _launchInWebViewOrVC(Uri(
+                    scheme: 'https',
+                    host: 'jrcmadushanka.github.io',
+                    path: 'share_drive_policies'));
+              },
+              child: const Text("Read Privacy Policy",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: CustomResource.primaryGreen))),
+          const SizedBox(
+            height: 16,
+          ),
+          Row(
+            children: [
+              Checkbox(
+                value: userAgreed,
+                onChanged: (value) => setState(() {
+                  userAgreed = !userAgreed;
+                }),
+                fillColor:
+                    MaterialStateProperty.all(CustomResource.primaryGreen),
+              ),
+              const Expanded(
+                  child: Text(
+                "I agree to above Privacy Policy, and Terms & Conditions",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: CustomResource.primaryGreen),
+                maxLines: 2,
+              )),
+            ],
+          ),
+          Container(
+            height: 45,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: DefaultButton("Register", () {
+              if (userAgreed) {
+                firebaseService
+                    .signUp(
+                        emailFieldController.text, passwordFieldController.text)
+                    .then((value) {
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(
+                      builder: (_) => const AuthenticationScreen(
+                          screenType:
+                              AuthenticationScreen.authScreenTypeLogin)));
+                }).onError((String? error, StackTrace? stackTrace) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                      error ?? "Something went wrong!",
+                      textAlign: TextAlign.center,
+                    ),
+                    backgroundColor: Colors.amber,
+                  ));
+                });
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text(
+                    "Please accept the privacy policy before register",
+                    textAlign: TextAlign.center,
+                  ),
+                  backgroundColor: Colors.amber,
+                ));
+              }
+            }, enabled: userAgreed),
+          ),
+          TextButton(
+              onPressed: () => setState(() {
+                    section = 2;
+                    userAgreed = false;
+                  }),
+              child: const Text("Back",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: CustomResource.primaryGreen)))
         ]);
   }
 
@@ -441,5 +633,14 @@ class RegisterWidgetState extends State<RegisterWidget> {
               ))
             }
         });
+  }
+
+  Future<void> _launchInWebViewOrVC(Uri url) async {
+    if (!await launchUrl(
+      url,
+      mode: LaunchMode.externalApplication,
+    )) {
+      throw 'Could not launch $url';
+    }
   }
 }
