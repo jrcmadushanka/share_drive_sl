@@ -6,6 +6,7 @@ import 'package:share_drive_sl/utilities/custom_resources.dart';
 class DefaultTextField extends StatelessWidget {
   final String hint;
   final void Function(String)? onChange;
+  final String? Function(String?)? validator;
   final bool? isSecure;
   final TextInputType? type;
   final int minLines;
@@ -23,12 +24,13 @@ class DefaultTextField extends StatelessWidget {
       this.isSecure,
       this.type,
       this.controller,
-      this.inputFormatter})
+      this.inputFormatter,
+      this.validator})
       : super(key: key);
 
   @override
-  TextField build(BuildContext context) {
-    return TextField(
+  TextFormField build(BuildContext context) {
+    return TextFormField(
       style: const TextStyle(
           color: CustomResource.primaryGreen, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
@@ -52,6 +54,7 @@ class DefaultTextField extends StatelessWidget {
       maxLength: maxLength,
       controller: controller,
       inputFormatters: inputFormatter,
+      validator: validator,
     );
   }
 }

@@ -14,6 +14,15 @@ class FirebaseService {
     return user?.uid;
   }
 
+  void passwordLessSignIn(String email) async {
+
+    print(email);
+    FirebaseAuth.instance.sendSignInLinkToEmail(
+        email: email, actionCodeSettings: acs)
+        .catchError((onError) => print('Error sending email verification $onError'))
+        .then((value) => print('Successfully sent email verification'));
+  }
+
   Future<User?> signUp(String email, String password) async {
     print('Signing up');
     var completer = Completer<User?>();
@@ -48,19 +57,20 @@ class FirebaseService {
     } else {
       completer.completeError("No singed in users");
     }
-
-    //?.reload();
-    // listener = _firebaseAuth.authStateChanges().listen((User? user) {
-    //   if (user == null) {
-    //     print('User is currently signed out!');
-    //     completer.completeError("No singed in users");
-    //   } else {
-    //     completer.complete(user);
-    //   }
-    //   listener.cancel();
-    // });
     return completer.future;
   }
+
+  var acs = ActionCodeSettings(
+    // URL you want to redirect back to. The domain (www.example.com) for this
+    // URL must be whitelisted in the Firebase Console.
+      url: 'https://civdevops.page.link/pl_login',
+      // This must be true
+      handleCodeInApp: true,
+      androidPackageName: 'com.civdevops.share_drive_sl',
+      // installIfNotAvailable
+      androidInstallApp: true,
+      // minimumVersion
+      androidMinimumVersion: '10');
 
   Future<void> signOut() async {
     return _firebaseAuth.signOut();
