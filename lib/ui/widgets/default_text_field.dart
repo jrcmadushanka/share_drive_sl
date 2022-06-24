@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_drive_sl/utilities/custom_resources.dart';
@@ -7,6 +6,7 @@ class DefaultTextField extends StatelessWidget {
   final String hint;
   final void Function(String)? onChange;
   final String? Function(String?)? validator;
+  final String? prefix;
   final bool? isSecure;
   final TextInputType? type;
   final int minLines;
@@ -25,7 +25,8 @@ class DefaultTextField extends StatelessWidget {
       this.type,
       this.controller,
       this.inputFormatter,
-      this.validator})
+      this.validator,
+      this.prefix})
       : super(key: key);
 
   @override
@@ -42,6 +43,8 @@ class DefaultTextField extends StatelessWidget {
             borderSide:
                 BorderSide(color: CustomResource.primaryGreenLight, width: 1.0),
             borderRadius: BorderRadius.all(Radius.circular(10))),
+        prefixText: prefix ,
+        prefixStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
         hintText: hint,
         hintStyle: const TextStyle(
             color: CustomResource.primaryGreenLight, fontSize: 12),

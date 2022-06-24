@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dotted_border/dotted_border.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
@@ -432,23 +434,38 @@ class RegisterWidgetState extends State<RegisterWidget> {
                     color: CustomResource.primaryGreen,
                     radius: const Radius.circular(10),
                     child: ClipRRect(
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(10)),
-                        child: Container(
-                            height: 100,
-                            width: 160,
-                            decoration: BoxDecoration(
-                              color: CustomResource.primaryGreenLight
-                                  .withAlpha(70),
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(10)),
-                            ),
-                            child: document3 == null
-                                ? const Icon(
-                                    Icons.photo_camera,
-                                    color: Colors.white,
+                      borderRadius: const BorderRadius.all(Radius.circular(10)),
+                      child: Container(
+                          height: 100,
+                          width: 160,
+                          decoration: BoxDecoration(
+                            color:
+                                CustomResource.primaryGreenLight.withAlpha(70),
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(10)),
+                          ),
+                          child: document3 == null
+                              ? const Icon(
+                                  Icons.photo_camera,
+                                  color: Colors.white,
+                                )
+                              : Stack(children: [
+                                  Image.file(
+                                    document3!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  Column(
+                                    children: const [
+                                      Center(
+                                        child: Text(
+                                          "Text is Here ",
+                                          style: TextStyle(fontSize: 20),
+                                        ),
+                                      )
+                                    ],
                                   )
-                                : Image.file(document3!, fit: BoxFit.cover))))),
+                                ])),
+                    ))),
             const Spacer()
           ]),
           const SizedBox(
@@ -554,23 +571,7 @@ class RegisterWidgetState extends State<RegisterWidget> {
             margin: const EdgeInsets.symmetric(vertical: 8),
             child: DefaultButton("Register", () {
               if (userAgreed) {
-                firebaseService
-                    .signUp(
-                        emailFieldController.text, passwordFieldController.text)
-                    .then((value) {
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (_) => const AuthenticationScreen(
-                          screenType:
-                              AuthenticationScreen.authScreenTypeLogin)));
-                }).onError((String? error, StackTrace? stackTrace) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(
-                      error ?? "Something went wrong!",
-                      textAlign: TextAlign.center,
-                    ),
-                    backgroundColor: Colors.amber,
-                  ));
-                });
+                registerUser();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text(
@@ -642,5 +643,84 @@ class RegisterWidgetState extends State<RegisterWidget> {
     )) {
       throw 'Could not launch $url';
     }
+  }
+
+  registerUser() async {
+    firebaseService
+        .signUp(emailFieldController.text, passwordFieldController.text)
+        .then((value) async {
+      await Future.wait<void>([
+        uploadFile(document2!, "dp", value?.uid ?? "discard"),
+        uploadFile(document1!, "vd1", value?.uid ?? "discard"),
+        uploadFile(document3!, "vd2", value?.uid ?? "discard"),
+        firebaseService
+            .registerUser(
+                value?.uid ?? "nil",
+                firstNameFieldController.text,
+                lastNameFieldController.text,
+                phoneFieldController.text,
+                emailFieldController.text,
+                ApplicationConstants.userStatusNew,
+                addressFieldController.text,
+                verificationType,
+                "",
+                "",
+                "",
+                userAgreed)
+            .onError((String? error, StackTrace? stackTrace) =>
+                showSnackBar(error ?? "Something went wrong!", Colors.amber))
+      ]).then((value) => {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (_) => const AuthenticationScreen(
+                screenType:
+                AuthenticationScreen.authScreenTypeLogin)))
+      });
+    }).onError((String? error, StackTrace? stackTrace) =>
+            showSnackBar(error ?? "Something went wrong!", Colors.amber));
+  }
+
+  showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+        message,
+        textAlign: TextAlign.center,
+      ),
+      backgroundColor: color,
+    ));
+  }
+
+  Future uploadFile(File? file, String type, String id) {
+    var completer = Completer<void>();
+
+    if (file != null) {
+      firebaseService
+          .uploadFile(file, type, id)
+          .snapshotEvents
+          .listen((taskSnapshot) {
+        switch (taskSnapshot.state) {
+          case TaskState.running:
+            final progress = 100.0 *
+                (taskSnapshot.bytesTransferred / taskSnapshot.totalBytes);
+            print("Upload is $progress% complete.");
+            break;
+          case TaskState.paused:
+            print("Upload is paused.");
+            break;
+          case TaskState.canceled:
+            print("Upload was canceled");
+            break;
+          case TaskState.error:
+            completer.completeError("Upload Error");
+            break;
+          case TaskState.success:
+            completer.complete();
+            break;
+        }
+      });
+    } else {
+      completer.completeError("Invalid File");
+    }
+
+    return completer.future;
   }
 }

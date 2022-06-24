@@ -71,7 +71,9 @@ class SplashScreenState extends State<SplashScreen> {
     _timer = Timer(const Duration(seconds: 2), () {
       firebaseService
           .authStatus()
-          .then((value) {print(value?.displayName); print("--------------------------------------------------------------------");})
+          .then((value) {Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (_) => const AuthenticationScreen(
+              screenType: AuthenticationScreen.authScreenTypeLogin))); print("--------------------------------------------------------------------");})
           .onError((error, stackTrace) {
                 Navigator.of(context).pushReplacement(MaterialPageRoute(
                     builder: (_) => const AuthenticationScreen(

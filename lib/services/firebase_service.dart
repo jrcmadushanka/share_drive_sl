@@ -1,10 +1,15 @@
 import 'dart:async';
-
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:share_drive_sl/utilities/fileReferenceHelper.dart';
 
 class FirebaseService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseFirestore _firebaseFireStore = FirebaseFirestore.instance;
+  final _firebaseStorage = FirebaseStorage.instance;
+
   late StreamSubscription listener;
 
   Future<String?> signIn(String email, String password) async {
@@ -15,11 +20,11 @@ class FirebaseService {
   }
 
   void passwordLessSignIn(String email) async {
-
     print(email);
-    FirebaseAuth.instance.sendSignInLinkToEmail(
-        email: email, actionCodeSettings: acs)
-        .catchError((onError) => print('Error sending email verification $onError'))
+    FirebaseAuth.instance
+        .sendSignInLinkToEmail(email: email, actionCodeSettings: acs)
+        .catchError(
+            (onError) => print('Error sending email verification $onError'))
         .then((value) => print('Successfully sent email verification'));
   }
 
@@ -28,19 +33,15 @@ class FirebaseService {
     var completer = Completer<User?>();
 
     try {
-      print('Signing up 1');
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final credential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      print('Signing up 2');
       completer.complete(credential.user);
-      print('Signing up 3');
     } on FirebaseAuthException catch (e) {
       completer.completeError(e.message ?? "Connection Error!");
     } catch (e) {
-      print('Signing up catch');
-      print(e);
       completer.completeError('Something went wrong!');
     }
 
@@ -50,10 +51,10 @@ class FirebaseService {
   Future<User?> authStatus() async {
     var completer = Completer<User?>();
 
-    if(_firebaseAuth.currentUser != null){
-      _firebaseAuth.currentUser?.reload().then((value) => {
-        completer.complete(_firebaseAuth.currentUser)
-      });
+    if (_firebaseAuth.currentUser != null) {
+      _firebaseAuth.currentUser
+          ?.reload()
+          .then((value) => {completer.complete(_firebaseAuth.currentUser)});
     } else {
       completer.completeError("No singed in users");
     }
@@ -61,8 +62,8 @@ class FirebaseService {
   }
 
   var acs = ActionCodeSettings(
-    // URL you want to redirect back to. The domain (www.example.com) for this
-    // URL must be whitelisted in the Firebase Console.
+      // URL you want to redirect back to. The domain (www.example.com) for this
+      // URL must be whitelisted in the Firebase Console.
       url: 'https://civdevops.page.link/pl_login',
       // This must be true
       handleCodeInApp: true,
@@ -74,5 +75,46 @@ class FirebaseService {
 
   Future<void> signOut() async {
     return _firebaseAuth.signOut();
+  }
+
+  Future<void> registerUser(
+    String id,
+    String firstName,
+    String lastName,
+    String phone,
+    String email,
+    String status,
+    String address,
+    String verificationType,
+    String userImage,
+    String verificationImageOne,
+    String verificationImageTwo,
+    bool didAgreeToPolicies,
+  ) async {
+    return _firebaseFireStore.collection("users").doc(email).set({
+      'id': id,
+      'email': email,
+      'firstName': firstName,
+      'lastName': lastName,
+      'phone': phone,
+      'status': status,
+      'address': address,
+      'verificationType': verificationType,
+      'userImage': userImage,
+      'verificationImageOne': verificationImageOne,
+      'verificationImageTwo': verificationImageTwo,
+      'didAgreeToPolicies': didAgreeToPolicies,
+    });
+  }
+
+  UploadTask uploadFile(File file, String type, String id){
+
+    final storageRef = _firebaseStorage.ref();
+
+    Reference? imagesRef = storageRef.child("images/${type}");
+
+    final fileName = FileReferenceHelper.generateFileName(id, type) + FileReferenceHelper.getFileExtension(file.path);
+
+    return imagesRef.child(fileName).putFile(file);
   }
 }
