@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -107,14 +108,13 @@ class FirebaseService {
     });
   }
 
-  UploadTask uploadFile(File file, String type, String id){
-
+  Reference getUploadReference(String type, String id, String extension){
     final storageRef = _firebaseStorage.ref();
 
     Reference? imagesRef = storageRef.child("images/${type}");
 
-    final fileName = FileReferenceHelper.generateFileName(id, type) + FileReferenceHelper.getFileExtension(file.path);
+    final fileName = FileReferenceHelper.generateFileName(id, type) + extension;
 
-    return imagesRef.child(fileName).putFile(file);
+    return imagesRef.child(fileName);
   }
 }

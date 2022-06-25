@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_drive_sl/ui/widgets/default_button.dart';
@@ -13,6 +15,7 @@ import 'package:share_drive_sl/utilities/application_constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/firebase_service.dart';
 import '../../utilities/custom_resources.dart';
+import '../../utilities/fileReferenceHelper.dart';
 import '../screens/authentication_screen.dart';
 import 'default_text_field.dart';
 import 'number_box.dart';
@@ -34,6 +37,9 @@ class RegisterWidgetState extends State<RegisterWidget> {
   File? document1;
   File? document2;
   File? document3;
+  String? d1Path;
+  String? d2Path;
+  String? d3Path;
   bool userAgreed = false;
 
   final _formKey = GlobalKey<FormState>();
@@ -79,17 +85,17 @@ class RegisterWidgetState extends State<RegisterWidget> {
                       NumberBox(isSelected: section == 1, number: "1"),
                       Expanded(
                           child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                        height: 2,
-                        color: Colors.grey,
-                      )),
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            height: 2,
+                            color: Colors.grey,
+                          )),
                       NumberBox(isSelected: section == 2, number: "2"),
                       Expanded(
                           child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                        height: 2,
-                        color: Colors.grey,
-                      )),
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            height: 2,
+                            color: Colors.grey,
+                          )),
                       NumberBox(isSelected: section == 3, number: "3"),
                       const Spacer(),
                     ],
@@ -99,12 +105,12 @@ class RegisterWidgetState extends State<RegisterWidget> {
               ),
               Expanded(
                   child: SingleChildScrollView(
-                child: section == 1
-                    ? getSectionOne()
-                    : section == 2
+                    child: section == 1
+                        ? getSectionOne()
+                        : section == 2
                         ? getSectionTwo()
                         : getSectionThree(),
-              ))
+                  ))
             ]));
   }
 
@@ -181,16 +187,17 @@ class RegisterWidgetState extends State<RegisterWidget> {
                       ),
                       Expanded(
                           child: DefaultTextField(
-                        "Enter phone",
-                        type: TextInputType.phone,
-                        controller: phoneFieldController,
-                        inputFormatter: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-                          LengthLimitingTextInputFormatter(10,
-                              maxLengthEnforcement: MaxLengthEnforcement
-                                  .truncateAfterCompositionEnds)
-                        ],
-                      )),
+                            "Enter phone",
+                            type: TextInputType.phone,
+                            controller: phoneFieldController,
+                            inputFormatter: [
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9]')),
+                              LengthLimitingTextInputFormatter(10,
+                                  maxLengthEnforcement: MaxLengthEnforcement
+                                      .truncateAfterCompositionEnds)
+                            ],
+                          )),
                     ],
                   )),
               const Text(
@@ -205,7 +212,7 @@ class RegisterWidgetState extends State<RegisterWidget> {
                 margin: const EdgeInsets.only(top: 8, bottom: 21),
                 child: DefaultTextField("Enter address",
                     type: TextInputType.streetAddress,
-                    controller: emailFieldController),
+                    controller: addressFieldController),
               ),
               const Text(
                 "Password",
@@ -325,7 +332,10 @@ class RegisterWidgetState extends State<RegisterWidget> {
             color: CustomResource.primaryGreenGray.withAlpha(50),
           ),
           Text(
-            "Take a clear photo of the ${verificationType == ApplicationConstants.verificationTypePassport ? "first page of your $verificationType" : "front side of your $verificationType"}",
+            "Take a clear photo of the ${verificationType ==
+                ApplicationConstants.verificationTypePassport
+                ? "first page of your $verificationType"
+                : "front side of your $verificationType"}",
             style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: CustomResource.primaryGreen,
@@ -345,21 +355,21 @@ class RegisterWidgetState extends State<RegisterWidget> {
                     radius: const Radius.circular(10),
                     child: ClipRRect(
                         borderRadius:
-                            const BorderRadius.all(Radius.circular(10)),
+                        const BorderRadius.all(Radius.circular(10)),
                         child: Container(
                           height: 100,
                           width: 160,
                           decoration: BoxDecoration(
                             color:
-                                CustomResource.primaryGreenLight.withAlpha(70),
+                            CustomResource.primaryGreenLight.withAlpha(70),
                             borderRadius:
-                                const BorderRadius.all(Radius.circular(10)),
+                            const BorderRadius.all(Radius.circular(10)),
                           ),
                           child: document1 == null
                               ? const Icon(
-                                  Icons.photo_camera,
-                                  color: Colors.white,
-                                )
+                            Icons.photo_camera,
+                            color: Colors.white,
+                          )
                               : Image.file(document1!, fit: BoxFit.cover),
                         )))),
             const Spacer()
@@ -392,7 +402,7 @@ class RegisterWidgetState extends State<RegisterWidget> {
                       radius: const Radius.circular(10),
                       child: ClipRRect(
                           borderRadius:
-                              const BorderRadius.all(Radius.circular(10)),
+                          const BorderRadius.all(Radius.circular(10)),
                           child: Container(
                             height: 100,
                             width: 160,
@@ -400,13 +410,13 @@ class RegisterWidgetState extends State<RegisterWidget> {
                               color: CustomResource.primaryGreenLight
                                   .withAlpha(70),
                               borderRadius:
-                                  const BorderRadius.all(Radius.circular(10)),
+                              const BorderRadius.all(Radius.circular(10)),
                             ),
                             child: document2 == null
                                 ? const Icon(
-                                    Icons.photo_camera,
-                                    color: Colors.white,
-                                  )
+                              Icons.photo_camera,
+                              color: Colors.white,
+                            )
                                 : Image.file(document2!, fit: BoxFit.cover),
                           )))),
               const Spacer()
@@ -440,31 +450,19 @@ class RegisterWidgetState extends State<RegisterWidget> {
                           width: 160,
                           decoration: BoxDecoration(
                             color:
-                                CustomResource.primaryGreenLight.withAlpha(70),
+                            CustomResource.primaryGreenLight.withAlpha(70),
                             borderRadius:
-                                const BorderRadius.all(Radius.circular(10)),
+                            const BorderRadius.all(Radius.circular(10)),
                           ),
                           child: document3 == null
                               ? const Icon(
-                                  Icons.photo_camera,
-                                  color: Colors.white,
-                                )
-                              : Stack(children: [
-                                  Image.file(
-                                    document3!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  Column(
-                                    children: const [
-                                      Center(
-                                        child: Text(
-                                          "Text is Here ",
-                                          style: TextStyle(fontSize: 20),
-                                        ),
-                                      )
-                                    ],
-                                  )
-                                ])),
+                            Icons.photo_camera,
+                            color: Colors.white,
+                          )
+                              : Image.file(
+                            document3!,
+                            fit: BoxFit.cover,
+                          )),
                     ))),
             const Spacer()
           ]),
@@ -481,7 +479,8 @@ class RegisterWidgetState extends State<RegisterWidget> {
             }),
           ),
           TextButton(
-              onPressed: () => setState(() {
+              onPressed: () =>
+                  setState(() {
                     section = 1;
                   }),
               child: const Text("Back",
@@ -516,14 +515,14 @@ class RegisterWidgetState extends State<RegisterWidget> {
           ),
           const Text(
             "Welcome to Share Drive SL. \n"
-            "This applications has been developed in order to help citizens"
-            " of Sri Lanka to accommodate their day to day transportation needs \n"
-            "This application must only used to cover up your fuel fees and rates should be calculated according to fuel consumption. \n"
-            "This application can't be used for any type of commercial use or as any type of income source\n"
-            "This application will not motivate you to serve as a driver, We motivate you to share your vehicle when you are comfortable to "
-            "share it and help the community while helping your self with fuel fee. \n\n"
-            "Provided user verifications documentations will be securely saved on our servers and would not be provided to any individual user directly "
-            "in any circumstances. These data  would be provided to respective secure authorities in case of a proven scenario of legal case documented on respective authority.",
+                "This applications has been developed in order to help citizens"
+                " of Sri Lanka to accommodate their day to day transportation needs \n"
+                "This application must only used to cover up your fuel fees and rates should be calculated according to fuel consumption. \n"
+                "This application can't be used for any type of commercial use or as any type of income source\n"
+                "This application will not motivate you to serve as a driver, We motivate you to share your vehicle when you are comfortable to "
+                "share it and help the community while helping your self with fuel fee. \n\n"
+                "Provided user verifications documentations will be securely saved on our servers and would not be provided to any individual user directly "
+                "in any circumstances. These data  would be provided to respective secure authorities in case of a proven scenario of legal case documented on respective authority.",
             style: TextStyle(
                 fontWeight: FontWeight.normal,
                 color: Colors.white,
@@ -550,20 +549,21 @@ class RegisterWidgetState extends State<RegisterWidget> {
             children: [
               Checkbox(
                 value: userAgreed,
-                onChanged: (value) => setState(() {
-                  userAgreed = !userAgreed;
-                }),
+                onChanged: (value) =>
+                    setState(() {
+                      userAgreed = !userAgreed;
+                    }),
                 fillColor:
-                    MaterialStateProperty.all(CustomResource.primaryGreen),
+                MaterialStateProperty.all(CustomResource.primaryGreen),
               ),
               const Expanded(
                   child: Text(
-                "I agree to above Privacy Policy, and Terms & Conditions",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: CustomResource.primaryGreen),
-                maxLines: 2,
-              )),
+                    "I agree to above Privacy Policy, and Terms & Conditions",
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: CustomResource.primaryGreen),
+                    maxLines: 2,
+                  )),
             ],
           ),
           Container(
@@ -584,7 +584,8 @@ class RegisterWidgetState extends State<RegisterWidget> {
             }, enabled: userAgreed),
           ),
           TextButton(
-              onPressed: () => setState(() {
+              onPressed: () =>
+                  setState(() {
                     section = 2;
                     userAgreed = false;
                   }),
@@ -609,31 +610,32 @@ class RegisterWidgetState extends State<RegisterWidget> {
         source: ImageSource.camera,
         preferredCameraDevice: isRear ? CameraDevice.rear : CameraDevice.front);
 
-    file.then((value) => {
-          if (value != null)
-            {
-              setState(() {
-                if (index == 1) {
-                  document1 = File(value.path);
-                  return;
-                } else if (index == 2) {
-                  document2 = File(value.path);
-                } else {
-                  document3 = File(value.path);
-                }
-              })
+    file.then((value) =>
+    {
+      if (value != null)
+        {
+          setState(() {
+            if (index == 1) {
+              document1 = File(value.path);
+              return;
+            } else if (index == 2) {
+              document2 = File(value.path);
+            } else {
+              document3 = File(value.path);
             }
-          else
-            {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text(
-                  "Something went wrong! Capture the image again.",
-                  textAlign: TextAlign.center,
-                ),
-                backgroundColor: Colors.amber,
-              ))
-            }
-        });
+          })
+        }
+      else
+        {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+              "Something went wrong! Capture the image again.",
+              textAlign: TextAlign.center,
+            ),
+            backgroundColor: Colors.amber,
+          ))
+        }
+    });
   }
 
   Future<void> _launchInWebViewOrVC(Uri url) async {
@@ -649,34 +651,47 @@ class RegisterWidgetState extends State<RegisterWidget> {
     firebaseService
         .signUp(emailFieldController.text, passwordFieldController.text)
         .then((value) async {
+      var uid = value?.uid ?? "discard";
       await Future.wait<void>([
-        uploadFile(document2!, "dp", value?.uid ?? "discard"),
-        uploadFile(document1!, "vd1", value?.uid ?? "discard"),
-        uploadFile(document3!, "vd2", value?.uid ?? "discard"),
+        uploadFile(document2!, "dp", value?.uid ?? "discard")
+            .onError((error, stackTrace) => handleError(error, null)),
+        uploadFile(document1!, "vd1", value?.uid ?? "discard")
+            .onError((error, stackTrace) => handleError(error, null)),
+        uploadFile(document3!, "vd2", value?.uid ?? "discard")
+            .onError((error, stackTrace) => handleError(error, null)),
+      ]).then((value) =>
+      {
         firebaseService
             .registerUser(
-                value?.uid ?? "nil",
-                firstNameFieldController.text,
-                lastNameFieldController.text,
-                phoneFieldController.text,
-                emailFieldController.text,
-                ApplicationConstants.userStatusNew,
-                addressFieldController.text,
-                verificationType,
-                "",
-                "",
-                "",
-                userAgreed)
+            uid,
+            firstNameFieldController.text,
+            lastNameFieldController.text,
+            phoneFieldController.text,
+            emailFieldController.text,
+            ApplicationConstants.userStatusNew,
+            addressFieldController.text,
+            verificationType,
+            d3Path ?? "",
+            d1Path ?? "",
+            d2Path ?? "",
+            userAgreed)
+            .then((value) =>
+            Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                    builder: (_) =>
+                    const AuthenticationScreen(
+                        screenType:
+                        AuthenticationScreen.authScreenTypeLogin))))
             .onError((String? error, StackTrace? stackTrace) =>
-                showSnackBar(error ?? "Something went wrong!", Colors.amber))
-      ]).then((value) => {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (_) => const AuthenticationScreen(
-                screenType:
-                AuthenticationScreen.authScreenTypeLogin)))
+            handleError(error, null))
       });
     }).onError((String? error, StackTrace? stackTrace) =>
-            showSnackBar(error ?? "Something went wrong!", Colors.amber));
+        handleError(error, null));
+  }
+
+  handleError(Object? error, Color? color) {
+    showSnackBar(error != null ? error.toString() : "Something went Wrong",
+        color ?? Colors.amber);
   }
 
   showSnackBar(String message, Color color) {
@@ -693,34 +708,81 @@ class RegisterWidgetState extends State<RegisterWidget> {
     var completer = Completer<void>();
 
     if (file != null) {
-      firebaseService
-          .uploadFile(file, type, id)
-          .snapshotEvents
-          .listen((taskSnapshot) {
-        switch (taskSnapshot.state) {
-          case TaskState.running:
-            final progress = 100.0 *
-                (taskSnapshot.bytesTransferred / taskSnapshot.totalBytes);
-            print("Upload is $progress% complete.");
-            break;
-          case TaskState.paused:
-            print("Upload is paused.");
-            break;
-          case TaskState.canceled:
-            print("Upload was canceled");
-            break;
-          case TaskState.error:
-            completer.completeError("Upload Error");
-            break;
-          case TaskState.success:
-            completer.complete();
-            break;
-        }
-      });
+      compressImage(file).then((value) {
+        Reference uploadLink = firebaseService.getUploadReference(
+            type, id, FileReferenceHelper.getFileExtension(file.path));
+        uploadLink
+            .putData(value)
+            .snapshotEvents
+            .listen((taskSnapshot) {
+          switch (taskSnapshot.state) {
+            case TaskState.running:
+              final progress = 100.0 *
+                  (taskSnapshot.bytesTransferred / taskSnapshot.totalBytes);
+              print("Upload is $progress% complete.");
+              break;
+            case TaskState.paused:
+              print("Upload is paused.");
+              break;
+            case TaskState.canceled:
+              print("Upload was canceled");
+              break;
+            case TaskState.error:
+              completer.completeError("Upload Error");
+              break;
+            case TaskState.success:
+              uploadLink.getDownloadURL().then((value) {
+                switch (type)
+                {
+                  case "vd1":
+                    d1Path = value;
+                    break;
+                  case "vd2":
+                    d2Path = value;
+                    break;
+                  case "dp":
+                    d3Path = value;
+                }
+                completer.complete();
+              }).onError((error, stackTrace) => handleError(error, null));
+              break;
+          }
+        });
+      }).onError((error, stackTrace) => handleError(error, null));
     } else {
       completer.completeError("Invalid File");
     }
+    return completer.future;
+  }
 
+  Future<Uint8List> compressImage(File file) async {
+    var completer = Completer<Uint8List>();
+    int sizeInBytes = file.lengthSync();
+    double sizeInMb = sizeInBytes / (1024 * 1024);
+    Uint8List bytes = file.readAsBytesSync();
+
+    if (sizeInMb > 1) {
+      int quality = sizeInMb > 5
+          ? 80
+          : sizeInMb > 4
+          ? 85
+          : sizeInMb > 3
+          ? 90
+          : 95;
+
+      await FlutterImageCompress.compressWithList(
+        bytes,
+        minHeight: 1080,
+        minWidth: 1080,
+        quality: quality,
+        rotate: 270,
+        format: CompressFormat.png,
+      ).then((value) => completer.complete(value)).onError(
+              (Object? error, stackTrace) =>
+              completer.completeError(error ?? "Compress Error!"));
+    } else {
+      completer.complete(bytes);
+    }
     return completer.future;
   }
 }
